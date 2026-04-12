@@ -180,7 +180,21 @@ export function AuthOverlay() {
                 />
               </label>
               <label className="block space-y-2 text-sm">
-                <span className="font-medium text-foreground">Password</span>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-foreground">Password</span>
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        close();
+                        router.push("/forgot-password");
+                      }}
+                      className="text-xs font-semibold text-primary hover:text-primary-strong"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
                 <input
                   required
                   type="password"
