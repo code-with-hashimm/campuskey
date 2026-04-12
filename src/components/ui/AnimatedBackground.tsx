@@ -10,7 +10,7 @@ export function AnimatedBackground({ children }: { children: React.ReactNode }) 
         offset: ["start end", "end start"],
     });
 
-    const pathLength = useTransform(scrollYProgress, [0.1, 1], [0.5, 1]);
+    const pathLength = useTransform(scrollYProgress, [0.1, 1], [0.5, 1.05]);
 
     return (
         <section ref={containerRef} className="relative w-full min-h-[150vh] overflow-hidden">

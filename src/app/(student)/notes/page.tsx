@@ -1,16 +1,56 @@
 import StudentNotesClient from "./client";
+import { supabaseAdmin } from "@/lib/supabase";
 
 export const metadata = {
   title: "My Notes | CampusKey",
 };
 
 export default async function StudentNotesPage() {
+  let notes: any[] = [];
+  let errorMsg: string | null = null;
+
+  try {
+    console.log("[FETCHING NOTES] Attempting to retrieve notes...");
+    
+    // Fetch notes with a join to get author names if possible, 
+    // but starting with a simple select as requested to debug.
+    const { data, error } = await supabaseAdmin
+      .from("notes")
+      .select(`
+        *,
+        users (
+          first_name,
+          last_name
+        )
+      `)
+      .order("created_at", { ascending: false });
+
+    console.log("[NOTES FETCH RESULT] Data:", data, "Error:", error);
+
+    if (error) {
+      errorMsg = error.message;
+    } else if (data) {
+      // Map the data to include authorName correctly
+      notes = data.map((note: any) => ({
+        ...note,
+        authorName: note.users ? `${note.users.first_name} ${note.users.last_name}` : "Unknown Student"
+      }));
+    }
+  } catch (err: any) {
+    console.error("[CRITICAL ERROR] Failed to fetch notes:", err);
+    errorMsg = err.message || "An unexpected error occurred while fetching notes.";
+  }
+
+  // Get unique subjects for the filter
+  const subjects = Array.from(new Set(notes.map(n => n.subject))).filter(Boolean);
+
   return (
     <div className="w-full">
       <StudentNotesClient 
-        initialNotes={[]} 
-        subjects={[]}
+        initialNotes={notes} 
+        subjects={subjects}
         initialBookmarks={[]}
+        error={errorMsg}
       />
     </div>
   );

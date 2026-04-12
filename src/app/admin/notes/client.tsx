@@ -17,7 +17,7 @@ type Note = {
   title: string;
   subject: string;
   semester: string;
-  file_url?: string;
+  attachment_url?: string;
   created_at: string;
   author_id: string;
   users?: {
@@ -34,8 +34,6 @@ export default function NotesClient({ initialNotes, subjects }: { initialNotes: 
   const [createForm, setCreateForm] = useState({ title: "", subject: "", semester: "1" });
   const [createFile, setCreateFile] = useState<File | null>(null);
   
-  const [previewNote, setPreviewNote] = useState<Note | null>(null);
-
   const notes = initialNotes.filter((n) =>
     n.title.toLowerCase().includes(search.toLowerCase()) ||
     n.subject.toLowerCase().includes(search.toLowerCase())
@@ -132,7 +130,13 @@ export default function NotesClient({ initialNotes, subjects }: { initialNotes: 
                     </p>
                   </CardContent>
                   <CardFooter className="pt-0 border-t flex flex-wrap gap-2 mt-auto p-4 bg-slate-50/50 rounded-b-xl">
-                    <Button variant="outline" size="sm" className="flex-1" onClick={() => setPreviewNote(note)}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1" 
+                      disabled={!note.attachment_url}
+                      onClick={() => note.attachment_url && window.open(note.attachment_url, '_blank')}
+                    >
                       <Eye className="w-4 h-4 mr-1" /> Preview
                     </Button>
 
@@ -196,32 +200,6 @@ export default function NotesClient({ initialNotes, subjects }: { initialNotes: 
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Preview Modal */}
-      <Dialog open={!!previewNote} onOpenChange={(open) => !open && setPreviewNote(null)}>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center gap-2 mb-2">
-               <Badge className="bg-indigo-100 text-indigo-700">{previewNote?.subject}</Badge>
-            </div>
-            <DialogTitle className="text-2xl">{previewNote?.title}</DialogTitle>
-            <p className="text-sm text-slate-500">By {previewNote?.users?.name} on {previewNote ? new Date(previewNote.created_at).toLocaleDateString() : ''}</p>
-          </DialogHeader>
-          <div className="mt-4 flex items-center gap-2">
-             <Badge variant="outline" className="text-lg py-1 px-4">Semester {previewNote?.semester}</Badge>
-          </div>
-          {previewNote?.file_url && (
-            <div className="mt-6 p-4 bg-slate-50 rounded-lg border flex items-center justify-between">
-               <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                  <FileText className="w-5 h-5 text-red-500" /> Attached Document
-               </div>
-               <Button size="sm" asChild>
-                  <a href={previewNote.file_url} target="_blank" rel="noreferrer">Open PDF</a>
-               </Button>
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>

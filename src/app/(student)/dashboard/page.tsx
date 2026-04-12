@@ -1,14 +1,14 @@
 import Link from "next/link";
 import CommunityCard from "@/components/community-card";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
+import MiniNoteCard from "@/components/mini-note-card";
 
 type Note = {
   id: string;
   title: string;
   subject: string | null;
-  content: string | null;
-  created_at: string | null;
-  file_size?: number | null;
+  attachment_url: string | null;
+  created_at: string;
 };
 
 type Event = {
@@ -16,72 +16,65 @@ type Event = {
   title: string;
   description: string;
   event_date: string | null;
-  is_active: boolean;
 };
 
-function formatDate(value: string | null) {
-  if (!value) {
-    return "Recently added";
-  }
+// --- Helper Functions ---
+
+function getRelativeTime(dateString: string) {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
 
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
-    year: "numeric",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 function formatEventDate(dateString: string | null) {
   if (!dateString) return "Date TBD";
   const date = new Date(dateString);
   const now = new Date();
-  
-  // Simple "Tomorrow" logic
+
   const tomorrow = new Date();
   tomorrow.setDate(now.getDate() + 1);
-  
+
   if (date.toDateString() === tomorrow.toDateString()) {
     return `Tomorrow, ${date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
   }
 
-  return date.toLocaleDateString("en-IN", { 
-    day: "2-digit", 
-    month: "short", 
-    hour: "2-digit", 
-    minute: "2-digit" 
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit"
   });
 }
 
-function formatFileSize(bytes: number | null | undefined) {
-  if (!bytes) {
-    return "PDF";
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${Math.round(bytes / 1024)} KB`;
-  }
-
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+// --- Main Page Component ---
 
 export default async function DashboardPage() {
   // Fetch Upcoming Events
-  const { data: eventsData } = await supabase
+  const { data: eventsData } = await supabaseAdmin
     .from("events")
     .select("*")
-    .eq("is_active", true)
     .gte("event_date", new Date().toISOString())
     .order("event_date", { ascending: true })
     .limit(2);
 
   const upcomingEvents: Event[] = eventsData || [];
 
-  // Fetch Recent Notes
-  const { data: notesData } = await supabase
+  // Fetch Recent Notes (Top 4)
+  const { data: notesData } = await supabaseAdmin
     .from("notes")
-    .select("*")
+    .select("id, title, subject, attachment_url, created_at")
     .order("created_at", { ascending: false })
-    .limit(3);
+    .limit(4);
 
   const recentNotes: Note[] = notesData || [];
 
@@ -92,14 +85,14 @@ export default async function DashboardPage() {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 h-full flex flex-col justify-between">
           <div>
             <div className="mb-4">
-              <h3 className="font-bold text-lg text-gray-900">Get Free Certificate</h3>
+              <h3 className="font-bold text-2xl text-gray-900">Get Free Certificate</h3>
               <p className="text-sm text-gray-500">Learn, Grow, and Get Certified — All in One Experience.</p>
             </div>
 
             <div className="space-y-4">
               {upcomingEvents.length === 0 ? (
                 <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                  <p className="text-sm text-slate-500 font-medium">No upcoming events scheduled</p>
+                  <p className="text-sm text-slate-500 font-medium">No upcoming events. Stay tuned!</p>
                 </div>
               ) : (
                 upcomingEvents.map((event, i, arr) => (
@@ -119,8 +112,8 @@ export default async function DashboardPage() {
           </div>
 
           <div className="mt-6">
-            <Link 
-              href="/events" 
+            <Link
+              href="/events"
               className="block w-full text-center border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-colors"
             >
               See More Events
@@ -132,64 +125,40 @@ export default async function DashboardPage() {
         <CommunityCard />
       </div>
 
-      <section className="rounded-[32px] border border-primary/12 bg-white/92 p-6 shadow-xl shadow-primary/8 sm:p-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <section className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary/70">
-              Recent Notes
-            </p>
+            <h3 className="text-lg font-bold text-slate-900">Recent Notes</h3>
+            <p className="text-sm text-slate-500">Latest study materials shared by your peers.</p>
           </div>
           <Link
-            href="/notes"
-            className="text-sm font-semibold text-primary hover:text-primary-strong"
+            href="/dashboard/notes"
+            className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
           >
-            View all notes
+            View all notes →
           </Link>
         </div>
 
         {recentNotes.length === 0 ? (
-          <div className="mt-6 rounded-[28px] border border-dashed border-primary/20 bg-primary-soft/45 px-6 py-12 text-center">
-            <p className="text-lg font-semibold text-foreground">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+            <p className="text-lg font-semibold text-slate-900">
               No notes available yet
             </p>
-            <p className="mt-2 text-sm text-muted">
-              Once notes are uploaded, they&apos;ll appear here automatically.
+            <p className="mt-2 text-sm text-slate-500">
+              Check back soon for new study materials!
             </p>
           </div>
         ) : (
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {recentNotes.map((note) => (
-              <article
+              <MiniNoteCard
                 key={note.id}
-                className="rounded-[28px] border border-primary/10 bg-[#fcfbff] p-5 shadow-sm shadow-primary/5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                    {note.subject ?? "General"}
-                  </span>
-                  <span className="text-xs font-medium text-muted">
-                    {formatFileSize(note.file_size)}
-                  </span>
-                </div>
-
-                <h4 className="mt-4 text-xl font-semibold text-foreground line-clamp-1" title={note.title}>
-                  {note.title}
-                </h4>
-
-                <p className="mt-4 text-sm text-muted line-clamp-2">
-                  {note.content}
-                </p>
-
-                <div className="mt-6 flex items-center justify-between text-sm">
-                  <span className="text-muted">{formatDate(note.created_at)}</span>
-                  <Link
-                    href="/notes"
-                    className="font-semibold text-primary hover:text-primary-strong"
-                  >
-                    Open library
-                  </Link>
-                </div>
-              </article>
+                id={note.id}
+                title={note.title}
+                subject={note.subject ?? "General"}
+                attachment_url={note.attachment_url}
+                relativeTime={getRelativeTime(note.created_at)}
+              />
             ))}
           </div>
         )}
