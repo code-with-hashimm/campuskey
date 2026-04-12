@@ -1,112 +1,89 @@
 import { AuthOverlay } from "@/components/auth-overlay";
-
-const highlights = [
-  "Access approved PYQs and study materials instantly",
-  "Track webinars, events, and upcoming academic sessions",
-  "Move between student tools in one focused workspace",
-];
+import HeroIllustration from "@/components/illustrations/HeroIllustration";
+// Import the files we just created! Ensure the paths match your project structure.
+import { AnimatedBackground } from "@/components/ui/AnimatedBackground";
+import { FeaturesGrid, VideoTestimonials, CTABanner } from "@/components/ui/landing-sections";
 
 export default function LandingPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#f7f2ff] text-foreground">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(107,70,193,0.18),_transparent_32%),radial-gradient(circle_at_bottom_right,_rgba(139,92,246,0.14),_transparent_34%)]" />
+    <main className="relative min-h-screen flex flex-col bg-slate-50 text-foreground">
+      {/* Gradient accent line */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 z-30" />
 
-      <section className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-8 sm:px-6 lg:px-8">
-        <header className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/75">
-              CampusKey
-            </p>
-            <h1 className="mt-2 text-lg font-semibold text-foreground">
-              Learn faster. Stay aligned.
-            </h1>
-          </div>
-          <AuthOverlay />
-        </header>
+      {/* ── HEADER ── */}
+      <header className="relative z-30 flex items-center justify-between px-6 py-4 md:px-12 md:py-6 w-full">
+        <h1 className="text-2xl sm:text-4xl font-bold tracking-tighter text-slate-900 font-[family-name:var(--font-surgena)] select-none">
+          CampusKey
+        </h1>
+        <AuthOverlay />
+      </header>
 
-        <div className="grid flex-1 items-center gap-12 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
-          <div>
-            <div className="inline-flex rounded-full border border-primary/15 bg-white/80 px-4 py-2 text-sm font-medium text-primary shadow-sm">
-              Student dashboard, events, notes, and AI shell in one place
-            </div>
-
-            <h2 className="mt-8 max-w-3xl text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
-              Your campus workflow, rebuilt for a cleaner Next.js experience.
+      {/* ── HERO SECTION ── */}
+      <section
+        className="relative w-full overflow-hidden"
+        style={{
+          height: "70vh",
+          WebkitMaskImage:
+            "linear-gradient(to bottom, transparent 0%, black 18%, black 78%, transparent 100%)",
+          maskImage:
+            "linear-gradient(to bottom, transparent 0%, black 18%, black 78%, transparent 100%)",
+        }}
+      >
+        <img
+          src="/college-bg.jpg"
+          alt="Campus background"
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover blur-[2px] opacity-70"
+        />
+        <div className="relative z-10 flex h-full flex-col items-center justify-center gap-8 px-4 text-center">
+          <div className="space-y-4">
+            <h2 className="text-5xl md:text-7xl font-bold tracking-tighter text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)] select-none">
+              One space.<br />Infinite focus.
             </h2>
-
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted">
-              CampusKey brings together note discovery, event updates, and your
-              day-to-day student tools behind one focused dashboard with
-              role-aware access.
+            <p className="mx-auto max-w-[560px] text-white/85 font-medium text-lg md:text-xl drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              Your unified gateway for academic notes, events, and focus tools.
             </p>
-
-            <div className="mt-10 grid gap-4 sm:grid-cols-3">
-              {highlights.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-[28px] border border-primary/10 bg-white/90 p-5 shadow-lg shadow-primary/8"
-                >
-                  <div className="mb-4 h-10 w-10 rounded-2xl bg-primary-soft" />
-                  <p className="text-sm leading-6 text-foreground">{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[36px] border border-primary/12 bg-white/92 p-6 shadow-2xl shadow-primary/12">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[28px] bg-primary p-5 text-white">
-                <p className="text-sm font-medium text-white/80">Recent Notes</p>
-                <h3 className="mt-3 text-2xl font-semibold">6 curated items</h3>
-                <p className="mt-4 text-sm leading-6 text-white/80">
-                  Surface the latest approved academic material from a single
-                  dashboard.
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-primary/10 bg-primary-soft/70 p-5">
-                <p className="text-sm font-medium text-primary">Events Feed</p>
-                <h3 className="mt-3 text-2xl font-semibold text-foreground">
-                  Active webinars
-                </h3>
-                <p className="mt-4 text-sm leading-6 text-muted">
-                  Stay aware of academic events and session links without digging
-                  through separate pages.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-[28px] border border-primary/10 bg-[#faf8ff] p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-primary">Student shell</p>
-                  <h3 className="mt-2 text-2xl font-semibold text-foreground">
-                    Mobile-friendly navigation
-                  </h3>
-                </div>
-                <div className="rounded-full border border-primary/10 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-primary/75">
-                  App Router
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-3">
-                {["Home", "Ask AI", "Events", "PYQ"].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center justify-between rounded-2xl border border-primary/10 bg-white px-4 py-3"
-                  >
-                    <span className="font-medium text-foreground">{item}</span>
-                    <span className="text-xs uppercase tracking-[0.22em] text-muted">
-                      Ready
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </section>
+
+      {/* ── BELOW HERO CONTENT (Wrapped in the Animated Line) ── */}
+      <AnimatedBackground>
+        <div className="flex flex-col relative z-10 pb-20">
+          <FeaturesGrid />
+
+          <section className="py-16 md:py-24 rounded-[40px] my-12 border border-white/20 shadow-xl shadow-indigo-500/5">
+            <div className="max-w-7xl mx-auto px-6 sm:px-12 lg:px-16 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+              {/* Left: Illustration */}
+              <div className="flex justify-center md:justify-start">
+                <div className="w-full max-w-[280px] lg:max-w-md">
+                  <HeroIllustration className="w-full h-auto text-slate-800 drop-shadow-2xl animate-float" />
+                </div>
+              </div>
+
+              {/* Right: Content */}
+              <div className="space-y-6 text-center md:text-left">
+                <h3 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight leading-tight">
+                  Academic focus,<br />
+                  <span className="text-indigo-600">reimagined.</span>
+                </h3>
+                <p className="text-lg text-slate-600 leading-relaxed max-w-xl">
+                  CampusKey brings all your essential study materials, event schedules, and focus tools into a single, cohesive experience. Stop juggling tabs and start moving faster.
+                </p>
+                <div className="pt-2">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-700 text-sm font-semibold border border-indigo-100">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                    Trusted by 2,000+ Students
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <VideoTestimonials />
+          <CTABanner />
+        </div>
+      </AnimatedBackground>
     </main>
   );
 }
-

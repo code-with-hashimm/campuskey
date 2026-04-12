@@ -1,43 +1,24 @@
-import { redirect } from "next/navigation";
 import { StudentShell } from "@/components/student-shell";
-import { isSupabaseConfigured } from "@/utils/supabase/env";
-import { createClient } from "@/utils/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export default async function StudentLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  if (!isSupabaseConfigured()) {
-    return (
-      <StudentShell userName="Student" userEmail="Configure Supabase to enable auth">
-        {children}
-      </StudentShell>
-    );
-  }
+  const user = await getCurrentUser();
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  // If user is not logged in, redirect them to the login page
   if (!user) {
-    redirect("/");
+    redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("first_name,last_name,email")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const userName =
-    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") ||
-    user.email ||
-    "Student";
+  const userName = `${user.firstName} ${user.lastName}`;
+  const userEmail = user.email;
 
   return (
-    <StudentShell userName={userName} userEmail={profile?.email ?? user.email ?? ""}>
+    <StudentShell userName={userName} userEmail={userEmail}>
       {children}
     </StudentShell>
   );

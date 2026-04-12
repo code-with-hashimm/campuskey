@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
+import { login, register } from "@/lib/auth";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 type Mode = "login" | "register";
 
@@ -28,6 +29,8 @@ export function AuthOverlay() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef<HCaptcha>(null);
 
   const updateField = (field: keyof FormState, value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -46,104 +49,56 @@ export function AuthOverlay() {
     setNotice(null);
   };
 
-  const handleLogin = async () => {
-    const supabase = createClient();
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email: form.email,
-      password: form.password,
-    });
-
-    if (signInError) {
-      throw signInError;
-    }
-
-    const userId = data.user?.id;
-
-    if (!userId) {
-      throw new Error("Unable to load your account.");
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (profileError) {
-      throw profileError;
-    }
-
-    router.push(profile?.role === "admin" ? "/admin/dashboard" : "/dashboard");
-    router.refresh();
-  };
-
-  const handleRegister = async () => {
-    const supabase = createClient();
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: {
-          first_name: form.firstName,
-          last_name: form.lastName,
-          role: "student",
-        },
-      },
-    });
-
-    if (signUpError) {
-      throw signUpError;
-    }
-
-    const userId = data.user?.id;
-
-    if (userId) {
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: userId,
-        email: form.email,
-        first_name: form.firstName,
-        last_name: form.lastName,
-        role: "student",
-      });
-
-      if (profileError) {
-        throw profileError;
-      }
-    }
-
-    if (data.session) {
-      router.push("/dashboard");
-      router.refresh();
-      return;
-    }
-
-    setNotice("Account created. Check your email to confirm your registration.");
-    setMode("login");
-  };
-
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setNotice(null);
     setIsPending(true);
 
+    if (!captchaToken) {
+      setError("Please complete the captcha.");
+      setIsPending(false);
+      return;
+    }
+
     try {
       if (mode === "login") {
-        await handleLogin();
+        const session = await login(form.email, form.password, captchaToken);
+        if ("error" in session) {
+          setError(session.error as string);
+          captchaRef.current?.resetCaptcha();
+          setCaptchaToken("");
+        } else {
+          setForm(initialState);
+          router.push(session.role === "admin" ? "/admin/dashboard" : "/dashboard");
+          router.refresh();
+        }
       } else {
-        await handleRegister();
+        const session = await register(
+          form.firstName,
+          form.lastName,
+          form.email,
+          form.password,
+          captchaToken
+        );
+        if ("error" in session) {
+          setError(session.error as string);
+          captchaRef.current?.resetCaptcha();
+          setCaptchaToken("");
+        } else {
+          setForm(initialState);
+          router.push("/dashboard");
+          router.refresh();
+        }
       }
-
-      setForm(initialState);
-      if (mode === "login") {
-        close();
-      }
-    } catch (submitError) {
+    } catch (submitError: any) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Something went wrong. Please try again.",
+          : "Something went wrong. Please try again."
       );
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken("");
     } finally {
       setIsPending(false);
     }
@@ -151,26 +106,26 @@ export function AuthOverlay() {
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={() => open("login")}
-          className="rounded-full border border-primary/25 bg-white px-5 py-3 text-sm font-semibold text-primary shadow-sm hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
+          className="rounded-full border border-slate-200 bg-white px-6 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50 transition-all"
         >
           Log in
         </button>
         <button
           type="button"
           onClick={() => open("register")}
-          className="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:-translate-y-0.5 hover:bg-primary-strong"
+          className="rounded-full bg-slate-950 px-6 py-2 text-sm font-semibold text-white shadow-xl hover:bg-slate-900 transition-all"
         >
           Create account
         </button>
       </div>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#130a27]/55 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-[28px] border border-white/45 bg-white shadow-2xl shadow-primary/20">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-[28px] border border-border bg-background shadow-2xl shadow-primary/20">
             <div className="border-b border-primary/10 bg-primary-soft/70 px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -184,7 +139,7 @@ export function AuthOverlay() {
                 <button
                   type="button"
                   onClick={close}
-                  className="rounded-full border border-primary/10 px-3 py-1.5 text-sm text-muted hover:border-primary/25 hover:text-primary"
+                  className="rounded-full border border-primary/20 px-3 py-1.5 text-sm font-medium text-slate-600 hover:border-primary/40 hover:text-primary hover:bg-primary-soft/50 transition-colors"
                 >
                   Close
                 </button>
@@ -200,7 +155,7 @@ export function AuthOverlay() {
                       required
                       value={form.firstName}
                       onChange={(event) => updateField("firstName", event.target.value)}
-                      className="w-full rounded-2xl border border-primary/15 bg-white px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                      className="w-full rounded-2xl border border-primary/15 bg-slate-50/50 px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-foreground"
                     />
                   </label>
                   <label className="space-y-2 text-sm">
@@ -209,12 +164,11 @@ export function AuthOverlay() {
                       required
                       value={form.lastName}
                       onChange={(event) => updateField("lastName", event.target.value)}
-                      className="w-full rounded-2xl border border-primary/15 bg-white px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                      className="w-full rounded-2xl border border-primary/15 bg-slate-50/50 px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-foreground"
                     />
                   </label>
                 </div>
               ) : null}
-
               <label className="block space-y-2 text-sm">
                 <span className="font-medium text-foreground">Email</span>
                 <input
@@ -222,10 +176,9 @@ export function AuthOverlay() {
                   type="email"
                   value={form.email}
                   onChange={(event) => updateField("email", event.target.value)}
-                  className="w-full rounded-2xl border border-primary/15 bg-white px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  className="w-full rounded-2xl border border-primary/15 bg-slate-50/50 px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-foreground"
                 />
               </label>
-
               <label className="block space-y-2 text-sm">
                 <span className="font-medium text-foreground">Password</span>
                 <input
@@ -234,7 +187,7 @@ export function AuthOverlay() {
                   minLength={6}
                   value={form.password}
                   onChange={(event) => updateField("password", event.target.value)}
-                  className="w-full rounded-2xl border border-primary/15 bg-white px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                  className="w-full rounded-2xl border border-primary/15 bg-slate-50/50 px-4 py-3 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-foreground"
                 />
               </label>
 
@@ -250,9 +203,18 @@ export function AuthOverlay() {
                 </p>
               ) : null}
 
+              <div className="flex justify-center">
+                <HCaptcha
+                  ref={captchaRef}
+                  sitekey={process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY || ""}
+                  onVerify={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken("")}
+                />
+              </div>
+
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || !captchaToken}
                 className="w-full rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/20 hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isPending
@@ -262,7 +224,7 @@ export function AuthOverlay() {
                     : "Create student account"}
               </button>
 
-              <p className="text-center text-sm text-muted">
+              <p className="text-center text-sm text-slate-500 font-medium">
                 {mode === "login"
                   ? "New here?"
                   : "Already have an account?"}{" "}

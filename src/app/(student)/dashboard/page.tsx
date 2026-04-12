@@ -1,15 +1,22 @@
 import Link from "next/link";
-import { isSupabaseConfigured } from "@/utils/supabase/env";
-import { createClient } from "@/utils/supabase/server";
+import CommunityCard from "@/components/community-card";
+import { supabase } from "@/lib/supabase";
 
 type Note = {
   id: string;
   title: string;
   subject: string | null;
-  semester: number | null;
-  year: number | null;
-  uploaded_at: string | null;
-  file_size: number | null;
+  content: string | null;
+  created_at: string | null;
+  file_size?: number | null;
+};
+
+type Event = {
+  id: string;
+  title: string;
+  description: string;
+  event_date: string | null;
+  is_active: boolean;
 };
 
 function formatDate(value: string | null) {
@@ -24,7 +31,28 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-function formatFileSize(bytes: number | null) {
+function formatEventDate(dateString: string | null) {
+  if (!dateString) return "Date TBD";
+  const date = new Date(dateString);
+  const now = new Date();
+  
+  // Simple "Tomorrow" logic
+  const tomorrow = new Date();
+  tomorrow.setDate(now.getDate() + 1);
+  
+  if (date.toDateString() === tomorrow.toDateString()) {
+    return `Tomorrow, ${date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
+  }
+
+  return date.toLocaleDateString("en-IN", { 
+    day: "2-digit", 
+    month: "short", 
+    hour: "2-digit", 
+    minute: "2-digit" 
+  });
+}
+
+function formatFileSize(bytes: number | null | undefined) {
   if (!bytes) {
     return "PDF";
   }
@@ -37,72 +65,72 @@ function formatFileSize(bytes: number | null) {
 }
 
 export default async function DashboardPage() {
-  let error: { message?: string } | null = null;
-  let recentNotes: Note[] = [];
+  // Fetch Upcoming Events
+  const { data: eventsData } = await supabase
+    .from("events")
+    .select("*")
+    .eq("is_active", true)
+    .gte("event_date", new Date().toISOString())
+    .order("event_date", { ascending: true })
+    .limit(2);
 
-  if (isSupabaseConfigured()) {
-    const supabase = await createClient();
-    const result = await supabase
-      .from("question_papers")
-      .select("id,title,subject,semester,year,uploaded_at,file_size")
-      .eq("is_approved", true)
-      .order("uploaded_at", { ascending: false })
-      .limit(6);
+  const upcomingEvents: Event[] = eventsData || [];
 
-    error = result.error;
-    recentNotes = (result.data ?? []) as Note[];
-  }
+  // Fetch Recent Notes
+  const { data: notesData } = await supabase
+    .from("notes")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  const recentNotes: Note[] = notesData || [];
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-[32px] bg-primary p-6 text-white shadow-2xl shadow-primary/20 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-white/75">
-            Dashboard
-          </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Recent Notes, ready when you are.
-          </h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-white/80">
-            Browse the latest approved papers from one place and keep up with
-            your academic flow across notes, events, and upcoming study tools.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/notes"
-              className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-primary shadow-sm hover:-translate-y-0.5"
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {/* Card 1: Upcoming Events */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 h-full flex flex-col justify-between">
+          <div>
+            <div className="mb-4">
+              <h3 className="font-bold text-lg text-gray-900">Get Free Certificate</h3>
+              <p className="text-sm text-gray-500">Learn, Grow, and Get Certified — All in One Experience.</p>
+            </div>
+
+            <div className="space-y-4">
+              {upcomingEvents.length === 0 ? (
+                <div className="py-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  <p className="text-sm text-slate-500 font-medium">No upcoming events scheduled</p>
+                </div>
+              ) : (
+                upcomingEvents.map((event, i, arr) => (
+                  <div key={event.id} className={`pb-4 ${i !== arr.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                        {event.event_date ? (new Date(event.event_date) > new Date() ? "Upcoming" : "Started") : "Upcoming"}
+                      </span>
+                    </div>
+                    <h4 className="font-medium text-gray-800 line-clamp-1" title={event.title}>{event.title}</h4>
+                    <p className="text-sm text-gray-500">{formatEventDate(event.event_date)}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <Link 
+              href="/events" 
+              className="block w-full text-center border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-colors"
             >
-              Browse all notes
-            </Link>
-            <Link
-              href="/events"
-              className="rounded-full border border-white/25 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10"
-            >
-              Explore events
+              See More Events
             </Link>
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-primary/12 bg-white/90 p-6 shadow-lg shadow-primary/8 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary/70">
-            Quick View
-          </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-            <div className="rounded-[24px] bg-primary-soft p-5">
-              <p className="text-sm text-primary">Approved notes loaded</p>
-              <p className="mt-2 text-3xl font-semibold text-foreground">
-                {recentNotes.length}
-              </p>
-            </div>
-            <div className="rounded-[24px] border border-primary/10 p-5">
-              <p className="text-sm text-muted">Student surfaces</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">
-                Dashboard, PYQ, Events, Chatbot
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Card 2: Community Group */}
+        <CommunityCard />
+      </div>
 
       <section className="rounded-[32px] border border-primary/12 bg-white/92 p-6 shadow-xl shadow-primary/8 sm:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -110,9 +138,6 @@ export default async function DashboardPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-primary/70">
               Recent Notes
             </p>
-            <h3 className="mt-2 text-2xl font-semibold text-foreground">
-              Latest approved papers
-            </h3>
           </div>
           <Link
             href="/notes"
@@ -122,22 +147,13 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {!isSupabaseConfigured() ? (
-          <div className="mt-6 rounded-[24px] border border-primary/15 bg-primary-soft px-5 py-4 text-sm text-primary-strong">
-            Add your Supabase values in `.env.local` to load the latest approved
-            notes from `question_papers`.
-          </div>
-        ) : error ? (
-          <div className="mt-6 rounded-[24px] border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-            Failed to load recent notes. Please try again.
-          </div>
-        ) : recentNotes.length === 0 ? (
+        {recentNotes.length === 0 ? (
           <div className="mt-6 rounded-[28px] border border-dashed border-primary/20 bg-primary-soft/45 px-6 py-12 text-center">
             <p className="text-lg font-semibold text-foreground">
-              No approved notes available yet
+              No notes available yet
             </p>
             <p className="mt-2 text-sm text-muted">
-              Once notes are approved, they&apos;ll appear here automatically.
+              Once notes are uploaded, they&apos;ll appear here automatically.
             </p>
           </div>
         ) : (
@@ -156,25 +172,16 @@ export default async function DashboardPage() {
                   </span>
                 </div>
 
-                <h4 className="mt-4 text-xl font-semibold text-foreground">
+                <h4 className="mt-4 text-xl font-semibold text-foreground line-clamp-1" title={note.title}>
                   {note.title}
                 </h4>
 
-                <div className="mt-4 flex flex-wrap gap-2 text-sm text-muted">
-                  {note.semester ? (
-                    <span className="rounded-full border border-primary/10 px-3 py-1">
-                      Semester {note.semester}
-                    </span>
-                  ) : null}
-                  {note.year ? (
-                    <span className="rounded-full border border-primary/10 px-3 py-1">
-                      {note.year}
-                    </span>
-                  ) : null}
-                </div>
+                <p className="mt-4 text-sm text-muted line-clamp-2">
+                  {note.content}
+                </p>
 
                 <div className="mt-6 flex items-center justify-between text-sm">
-                  <span className="text-muted">{formatDate(note.uploaded_at)}</span>
+                  <span className="text-muted">{formatDate(note.created_at)}</span>
                   <Link
                     href="/notes"
                     className="font-semibold text-primary hover:text-primary-strong"
