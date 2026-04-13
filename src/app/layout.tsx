@@ -21,7 +21,10 @@ const surgena = localFont({
 
 export const metadata: Metadata = {
   title: "CampusKey",
-  description: "CampusKey student portal and admin workspace",
+  description: "CampusKey",
+  icons: {
+    icon: "/ck.ico",
+  },
 };
 
 export default function RootLayout({
