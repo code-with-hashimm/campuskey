@@ -18,15 +18,15 @@ export default function CommunityCard() {
 
         <ul className="space-y-3 mb-6">
           <li className="flex items-center gap-2 text-gray-700">
-            <span className="text-emerald-500">✅</span> 
+            <span className="text-emerald-500">✅</span>
             <span>Collaborate with other students</span>
           </li>
           <li className="flex items-center gap-2 text-gray-700">
-            <span className="text-emerald-500">❓</span> 
+            <span className="text-emerald-500">❓</span>
             <span>Ask doubts</span>
           </li>
           <li className="flex items-center gap-2 text-gray-700">
-            <span className="text-emerald-500">🤝</span> 
+            <span className="text-emerald-500">🤝</span>
             <span>Find friends</span>
           </li>
         </ul>
@@ -35,9 +35,9 @@ export default function CommunityCard() {
       </div>
 
       <div className="mt-6">
-        <a 
-          href="https://chat.whatsapp.com/invite/placeholder" 
-          target="_blank" 
+        <a
+          href="https://chat.whatsapp.com/IpirT1Li7wLK7LxTHvZDau?mode=gi_t"
+          target="_blank"
           rel="noopener noreferrer"
           className="block w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors shadow-sm shadow-green-200"
         >

@@ -1,6 +1,9 @@
 "use client";
 
-import { Play } from "lucide-react";
+import { Play, MessageCircle } from "lucide-react";
+import { MailCheckIcon } from "@/components/icons/mail-check-icon";
+import { Instagram } from "@/components/ui/instagram";
+import { LinkedIn } from "@/components/ui/linkedin";
 
 export const FeaturesGrid = () => {
     const features = [
@@ -41,36 +44,84 @@ export const VideoTestimonials = () => {
 
     return (
         <section className="py-24">
-            <div className="max-w-6xl mx-auto px-6">
-                <h2 className="text-3xl md:text-5xl font-bold text-center mb-16 tracking-tight">
-                    What Students Say
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="max-w-7xl mx-auto px-6">
+                {/* Header */}
+                <div className="text-center mb-20">
+                    <span className="inline-block px-4 py-1.5 mb-4 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-full">
+                        Student Voices
+                    </span>
+                    <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent">
+                        What Students Say
+                    </h2>
+                    <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+                        Real experiences from students who transformed their campus life
+                    </p>
+                </div>
+
+                {/* Video Grid with Staggered Layout */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
                     {testimonials.map((t, i) => (
-                        <div key={i} className="group cursor-pointer">
-                            <div className="relative aspect-[3/4] w-full bg-slate-200 rounded-2xl overflow-hidden shadow-md transition-transform group-hover:scale-[1.02]">
-                                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                        <div
+                            key={i}
+                            className="group cursor-pointer"
+                            style={{
+                                transform: `translateY(${i === 1 ? '2rem' : '0'})`,
+                            }}
+                        >
+                            {/* Video Card */}
+                            <div className="relative aspect-[3/4] w-full bg-gradient-to-br from-slate-100 to-slate-200 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 group-hover:-translate-y-2">
+                                {/* Gradient Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+
+                                {/* Decorative Elements */}
+                                <div className="absolute top-4 right-4 w-20 h-20 bg-indigo-500/10 rounded-full blur-2xl" />
+                                <div className="absolute bottom-4 left-4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl" />
+
+                                {/* Play Button */}
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                                        <Play className="fill-indigo-600 text-indigo-600 ml-1" />
+                                    <div className="relative">
+                                        {/* Pulsing Ring */}
+                                        <div className="absolute inset-0 bg-white/30 rounded-full animate-ping" />
+
+                                        {/* Play Button */}
+                                        <div className="relative w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-indigo-600 transition-all duration-300">
+                                            <Play className="fill-indigo-600 text-indigo-600 group-hover:fill-white group-hover:text-white ml-1 transition-colors duration-300" size={28} />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="mt-4 text-center">
-                                <p className="font-bold text-lg">{t.name}</p>
-                                <p className="text-sm text-slate-500 uppercase tracking-widest">{t.branch}</p>
+
+                                {/* Student Info Overlay */}
+                                <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                    <div className="backdrop-blur-sm bg-white/10 rounded-2xl p-4 border border-white/20">
+                                        <p className="font-bold text-white text-xl mb-1">{t.name}</p>
+                                        <p className="text-sm text-white/90 uppercase tracking-wider font-medium">
+                                            {t.branch}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Duration Badge */}
+                                <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-sm rounded-full">
+                                    <span className="text-white text-xs font-semibold">2:45</span>
+                                </div>
                             </div>
                         </div>
                     ))}
+                </div>
+
+                {/* CTA Button */}
+                <div className="text-center mt-16">
+                    <button className="px-8 py-4 bg-slate-900 text-white font-semibold rounded-full hover:bg-indigo-600 transition-colors duration-300 shadow-lg hover:shadow-xl">
+                        View All Testimonials
+                    </button>
                 </div>
             </div>
         </section>
     );
 };
-
 export const CTABanner = () => {
     return (
-        <section className="py-32 px-6">
+        <section className="py-32 px-6 relative z-10">
             <div className="max-w-6xl mx-auto  rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-16 relative overflow-hidden shadow-2xl border border-white/10">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
@@ -276,5 +327,77 @@ export const CTABanner = () => {
                 }
             `}</style>
         </section>
+    );
+};
+
+export const Footer = () => {
+    return (
+        <footer className="w-full bg-slate-950 border-t border-white/5 text-slate-300 py-12 md:py-16 relative z-0">
+            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 mb-12">
+
+                {/* Column 1: Brand */}
+                <div className="space-y-6">
+                    <h2 className="text-3xl font-bold tracking-tighter text-white font-[family-name:var(--font-surgena)] select-none">
+                        CampusKey
+                    </h2>
+                    <p className="text-slate-400 max-w-xs text-sm leading-relaxed">
+                        Empowering students with AI-driven resources.
+                    </p>
+                    <a href="mailto:support.campuskey@gmail.com" className="group inline-flex items-center gap-2 text-sm text-slate-400 hover:text-indigo-400 transition-colors">
+                        <MailCheckIcon className="w-5 h-5" />
+                        support.campuskey@gmail.com
+                    </a>
+                </div>
+
+                {/* Column 2: Quick Links */}
+                <div className="space-y-6">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Platform
+                    </h3>
+                    <ul className="space-y-4">
+                        {['Home', 'Notes', 'PYQ', 'Ask AI'].map((link) => (
+                            <li key={link}>
+                                <a href="#" className="text-sm text-slate-400 hover:text-indigo-400 transition-colors">
+                                    {link}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+
+                {/* Column 3: Community */}
+                <div className="space-y-6">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Connect
+                    </h3>
+                    <ul className="space-y-4">
+                        <li>
+                            <a href="#" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-indigo-400 transition-colors">
+                                <MessageCircle className="w-4 h-4" />
+                                Join Community
+                            </a>
+                        </li>
+                        <li>
+                            <div className="flex gap-4 pt-2">
+                                <a href="#" className="group text-slate-400 hover:text-indigo-400 transition-colors">
+                                    <LinkedIn className="w-5 h-5" />
+                                </a>
+                                <a href="#" className="group text-slate-400 hover:text-indigo-400 transition-colors">
+                                    <Instagram className="w-5 h-5" />
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+            {/* Copyright Line */}
+            <div className="max-w-7xl mx-auto px-6 pt-8 border-t border-white/5">
+                <p className="text-xs text-slate-500 text-center">
+                    &copy; 2026 CampusKey. Developed by &lt;Hashim/&gt;.
+                </p>
+            </div>
+        </footer>
     );
 };
