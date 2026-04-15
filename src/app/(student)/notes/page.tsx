@@ -16,10 +16,12 @@ export default async function StudentNotesPage() {
         id,
         title,
         subject,
-        content,
+        semester,
         attachment_url,
-        views,
+        attachment_name,
+        file_size,
         created_at,
+        uploaded_by,
         users (
           first_name,
           last_name
@@ -30,9 +32,10 @@ export default async function StudentNotesPage() {
     if (error) {
       errorMsg = error.message;
     } else if (data) {
-      // Map the data to include authorName correctly
       notes = data.map((note: any) => ({
         ...note,
+        content: null,
+        views: 0,
         authorName: note.users ? `${note.users.first_name} ${note.users.last_name}` : "Unknown Student"
       }));
     }

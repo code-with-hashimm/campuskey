@@ -14,9 +14,9 @@ type Note = {
   id: string;
   title: string;
   subject: string;
-  content: string;
+  content?: string | null;
   attachment_url?: string;
-  views: number;
+  views?: number;
   created_at: string;
   authorName: string;
 };
@@ -48,7 +48,7 @@ export default function StudentNotesClient({
     .filter((n) => subjectFilter === "all" || n.subject === subjectFilter)
     .sort((a, b) => {
       if (sortOrder === "recent") return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      if (sortOrder === "views") return b.views - a.views;
+      if (sortOrder === "views") return (b.views ?? 0) - (a.views ?? 0);
       return 0;
     });
 
@@ -61,7 +61,7 @@ export default function StudentNotesClient({
     setSelectedNote(note);
 
     // Optimistically increment local views
-    setNotes(prev => prev.map(n => n.id === note.id ? { ...n, views: n.views + 1 } : n));
+    setNotes(prev => prev.map(n => n.id === note.id ? { ...n, views: (n.views ?? 0) + 1 } : n));
   };
 
   const downloadFile = () => {
@@ -169,7 +169,7 @@ export default function StudentNotesClient({
                 <CardTitle className="text-lg leading-tight group-hover:text-indigo-700 transition-colors">{note.title}</CardTitle>
               </CardHeader>
               <CardContent className="pb-4 flex-1">
-                <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed">{note.content}</p>
+                <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed">{note.content || "Open the attachment to view this note."}</p>
               </CardContent>
               <CardFooter className="pt-0 flex flex-col gap-3">
                 <div className="flex items-center justify-between text-xs text-slate-500 w-full">
@@ -177,7 +177,7 @@ export default function StudentNotesClient({
                     <UserIcon className="w-3.5 h-3.5" /> {note.authorName}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {note.views}</span>
+                    <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {note.views ?? 0}</span>
                     <span className="opacity-50">•</span>
                     <span>{new Date(note.created_at).toLocaleDateString()}</span>
                   </div>
@@ -211,7 +211,7 @@ export default function StudentNotesClient({
             <div className="flex items-center gap-2 mb-3 text-sm text-slate-500">
               <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-100">{selectedNote?.subject}</Badge>
               <span>•</span>
-              <div className="flex items-center gap-1"><Eye className="w-4 h-4" /> {selectedNote?.views} views</div>
+              <div className="flex items-center gap-1"><Eye className="w-4 h-4" /> {selectedNote?.views ?? 0} views</div>
             </div>
             <DialogTitle className="text-2xl leading-tight mb-2">{selectedNote?.title}</DialogTitle>
             <p className="text-sm text-slate-500 flex items-center gap-1.5">
@@ -221,7 +221,7 @@ export default function StudentNotesClient({
 
           <div className="p-6 overflow-y-auto flex-1 bg-white">
             <div className="prose prose-sm sm:prose-base max-w-none text-slate-700">
-              <p className="whitespace-pre-wrap leading-relaxed">{selectedNote?.content}</p>
+              <p className="whitespace-pre-wrap leading-relaxed">{selectedNote?.content || "This note does not include inline text content. Use the attachment below to view the document."}</p>
             </div>
           </div>
 
