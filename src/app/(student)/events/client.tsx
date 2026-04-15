@@ -13,7 +13,7 @@ type Event = {
   description: string;
   poster_url: string;
   button_text: string;
-  button_link: string;
+  external_link: string;
   event_date?: string;
   created_at: string;
 };
@@ -140,9 +140,9 @@ export default function StudentEventsClient({ events }: { events: Event[] }) {
                 </div>
                 
                 <DialogFooter className="mt-8 pt-6 border-t border-slate-100 sm:justify-start">
-                  {selectedEvent.button_link ? (
+                  {selectedEvent.external_link ? (
                     <Button asChild size="lg" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20">
-                      <a href={selectedEvent.button_link} target="_blank" rel="noreferrer">
+                      <a href={selectedEvent.external_link} target="_blank" rel="noreferrer">
                         {selectedEvent.button_text} <ExternalLink className="w-4 h-4 ml-2" />
                       </a>
                     </Button>

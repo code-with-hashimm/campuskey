@@ -8,7 +8,7 @@ export const metadata = {
 export default async function AdminEventsPage() {
   const { data: events } = await supabaseAdmin
     .from("events")
-    .select("*")
+    .select("id, title, description, poster_url, external_link, event_date, created_at")
     .order("event_date", { ascending: false });
 
   return (

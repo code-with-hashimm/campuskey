@@ -13,7 +13,13 @@ export default async function AdminNotesPage() {
   const { data: notes } = await supabaseAdmin
     .from("notes")
     .select(`
-      *,
+      id,
+      title,
+      subject,
+      semester,
+      attachment_url,
+      created_at,
+      uploaded_by,
       users (
         name:first_name
       )

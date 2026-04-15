@@ -1,8 +1,33 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/auth";
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const ALLOWED_POSTER_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+function sanitizeExternalLink(rawValue: string | null) {
+  if (!rawValue) {
+    return null;
+  }
+
+  const trimmedValue = rawValue.trim();
+  if (!trimmedValue) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(trimmedValue);
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return null;
+    }
+
+    return parsedUrl.toString();
+  } catch {
+    return null;
+  }
+}
 
 export async function createEvent(formData: FormData) {
   try {
@@ -10,12 +35,17 @@ export async function createEvent(formData: FormData) {
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const event_date_raw = formData.get("event_date") as string;
-    const button_link = formData.get("button_link") as string;
+    const external_link_raw = formData.get("external_link") as string | null;
     const file = formData.get("poster") as File | null;
 
     if (!title || !description || !event_date_raw) {
       console.error("[CREATE EVENT ERROR]: Missing required fields", { title, description, event_date_raw });
       return { error: "Missing required fields: Title, Description, and Event Date are required." };
+    }
+
+    const external_link = sanitizeExternalLink(external_link_raw);
+    if (external_link_raw?.trim() && !external_link) {
+      return { error: "External link must use http or https." };
     }
 
     // 1. Date Parsing to ISO
@@ -25,6 +55,10 @@ export async function createEvent(formData: FormData) {
 
     // 2. Poster Handling
     if (file && file.size > 0) {
+      if (file.size > MAX_UPLOAD_BYTES || !ALLOWED_POSTER_TYPES.has(file.type)) {
+        return { error: "Only JPEG, PNG, or WebP files up to 10MB are allowed." };
+      }
+
       const ext = file.name.split('.').pop() || 'jpg';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
 
@@ -42,12 +76,10 @@ export async function createEvent(formData: FormData) {
       title,
       description,
       event_date,
-      external_link: button_link || null,
+      external_link,
       poster_url,
       created_by: admin.id
     };
-
-    console.log("[SUPABASE INSERT] Payload being sent to Supabase:", payload);
 
     const { error } = await supabaseAdmin.from("events").insert([payload]);
 
@@ -67,15 +99,20 @@ export async function createEvent(formData: FormData) {
 
 export async function updateEvent(eventId: string, formData: FormData) {
   try {
-    const admin = await verifyAdmin();
+    await verifyAdmin();
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const event_date_raw = formData.get("event_date") as string;
-    const button_link = formData.get("button_link") as string;
+    const external_link_raw = formData.get("external_link") as string | null;
     const file = formData.get("poster") as File | null;
 
     if (!title || !description || !event_date_raw) {
       return { error: "Missing required fields" };
+    }
+
+    const external_link = sanitizeExternalLink(external_link_raw);
+    if (external_link_raw?.trim() && !external_link) {
+      return { error: "External link must use http or https." };
     }
 
     const event_date = new Date(event_date_raw).toISOString();
@@ -84,12 +121,14 @@ export async function updateEvent(eventId: string, formData: FormData) {
       title,
       description,
       event_date,
-      external_link: button_link || null,
+      external_link,
     };
 
     if (file && file.size > 0) {
-      // 1. Delete old poster if it exists (optional but cleaner)
-      // 2. Upload new one
+      if (file.size > MAX_UPLOAD_BYTES || !ALLOWED_POSTER_TYPES.has(file.type)) {
+        return { error: "Only JPEG, PNG, or WebP files up to 10MB are allowed." };
+      }
+
       const ext = file.name.split('.').pop() || 'jpg';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
       
@@ -99,8 +138,6 @@ export async function updateEvent(eventId: string, formData: FormData) {
       const { data: urlData } = supabaseAdmin.storage.from("event-posters").getPublicUrl(fileName);
       updatePayload.poster_url = urlData.publicUrl;
     }
-
-    console.log("[SUPABASE UPDATE] Payload being sent to Supabase:", updatePayload);
 
     const { error } = await supabaseAdmin.from("events").update(updatePayload).eq("id", eventId);
 

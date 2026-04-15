@@ -17,7 +17,7 @@ type Event = {
   title: string;
   description: string;
   poster_url: string;
-  button_link: string;
+  external_link: string;
   event_date?: string;
   created_at: string;
 };
@@ -31,7 +31,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: Event[]
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [formState, setFormState] = useState({
-    title: "", description: "", button_link: "", event_date: ""
+    title: "", description: "", external_link: "", event_date: ""
   });
   const [posterFile, setPosterFile] = useState<File | null>(null);
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: Event[]
 
   const openCreate = () => {
     setEditingId(null);
-    setFormState({ title: "", description: "", button_link: "", event_date: "" });
+    setFormState({ title: "", description: "", external_link: "", event_date: "" });
     setPosterFile(null);
     setPosterPreview(null);
     setShowForm(true);
@@ -76,7 +76,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: Event[]
     setFormState({
       title: e.title,
       description: e.description,
-      button_link: e.button_link || "",
+      external_link: e.external_link || "",
       event_date: e.event_date || "",
     });
     setPosterFile(null);
@@ -91,7 +91,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: Event[]
     const formData = new FormData();
     formData.append("title", formState.title);
     formData.append("description", formState.description);
-    formData.append("button_link", formState.button_link);
+    formData.append("external_link", formState.external_link);
     formData.append("event_date", formState.event_date);
     if (posterFile) formData.append("poster", posterFile);
 
@@ -197,7 +197,7 @@ export default function EventsClient({ initialEvents }: { initialEvents: Event[]
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">External Link (RSVP)</label>
-                <Input placeholder="https://..." type="url" value={formState.button_link} onChange={e => setFormState({ ...formState, button_link: e.target.value })} />
+                <Input placeholder="https://..." type="url" value={formState.external_link} onChange={e => setFormState({ ...formState, external_link: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Event Date</label>

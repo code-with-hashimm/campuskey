@@ -10,22 +10,22 @@ export default async function StudentNotesPage() {
   let errorMsg: string | null = null;
 
   try {
-    console.log("[FETCHING NOTES] Attempting to retrieve notes...");
-    
-    // Fetch notes with a join to get author names if possible, 
-    // but starting with a simple select as requested to debug.
     const { data, error } = await supabaseAdmin
       .from("notes")
       .select(`
-        *,
+        id,
+        title,
+        subject,
+        content,
+        attachment_url,
+        views,
+        created_at,
         users (
           first_name,
           last_name
         )
       `)
       .order("created_at", { ascending: false });
-
-    console.log("[NOTES FETCH RESULT] Data:", data, "Error:", error);
 
     if (error) {
       errorMsg = error.message;

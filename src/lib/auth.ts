@@ -2,7 +2,7 @@
 
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
-import { supabase, supabaseAdmin } from "./supabase";
+import { supabaseAdmin } from "./supabase";
 import bcrypt from "bcryptjs";
 
 
@@ -49,10 +49,21 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 }
 
 export async function verifyAdmin() {
-  const user = await getCurrentUser();
-  if (!user || user.role !== "admin") {
+  const sessionUser = await getCurrentUser();
+  if (!sessionUser) {
     throw new Error("Unauthorized access. Admin role required.");
   }
+
+  const { data: user, error } = await supabaseAdmin
+    .from("users")
+    .select("id, role")
+    .eq("id", sessionUser.id)
+    .maybeSingle();
+
+  if (error || !user || user.role !== "admin") {
+    throw new Error("Unauthorized access. Admin role required.");
+  }
+
   return user;
 }
 
@@ -88,10 +99,12 @@ export async function register(firstName: string, lastName: string, email: strin
     if (!isCaptchaValid) {
       return { error: "Bot verification failed." };
     }
-    const { data: existingUser, error: checkError } = await supabase
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const { data: existingUser, error: checkError } = await supabaseAdmin
       .from("users")
       .select("id")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .maybeSingle();
 
     if (checkError) {
@@ -110,11 +123,11 @@ export async function register(firstName: string, lastName: string, email: strin
       .insert([{
         first_name: firstName,
         last_name: lastName,
-        email,
+        email: normalizedEmail,
         password_hash: passwordHash,
         role: "student",
       }])
-      .select()
+      .select("id, email, role, first_name, last_name")
       .maybeSingle();
 
     if (error || !newUser) {
@@ -158,12 +171,12 @@ export async function login(email: string, password: string, captchaToken: strin
       return { error: "Bot verification failed." };
     }
 
-    console.log(`Attempting login for email: ${email}`);
+    const normalizedEmail = email.trim().toLowerCase();
 
-    const { data: user, error } = await supabase
+    const { data: user, error } = await supabaseAdmin
       .from("users")
-      .select("*")
-      .eq("email", email)
+      .select("id, email, role, first_name, last_name, password_hash")
+      .eq("email", normalizedEmail)
       .maybeSingle();
 
     if (error) {
@@ -172,7 +185,6 @@ export async function login(email: string, password: string, captchaToken: strin
     }
 
     if (!user) {
-      console.log(`User object is completely null for ${email}`);
       return { error: "Invalid email or password." };
     }
 
@@ -184,7 +196,6 @@ export async function login(email: string, password: string, captchaToken: strin
     try {
       const isValid = await bcrypt.compare(password, user.password_hash);
       if (!isValid) {
-        console.log("Password hash comparison failed.");
         return { error: "Invalid email or password." };
       }
     } catch (bcryptError) {
@@ -211,7 +222,6 @@ export async function login(email: string, password: string, captchaToken: strin
       maxAge: 60 * 60 * 24,
     });
 
-    console.log(`User ${email} login successful. Returning session data.`);
     return sessionData;
   } catch (err: any) {
     console.error("Unhandled exception in login flow:", err);

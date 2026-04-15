@@ -62,7 +62,7 @@ export default async function DashboardPage() {
   // Fetch Upcoming Events
   const { data: eventsData } = await supabaseAdmin
     .from("events")
-    .select("*")
+    .select("id, title, description, event_date")
     .gte("event_date", new Date().toISOString())
     .order("event_date", { ascending: true })
     .limit(2);
@@ -166,4 +166,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-

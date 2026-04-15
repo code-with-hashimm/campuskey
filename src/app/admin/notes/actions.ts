@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabase";
 import { verifyAdmin } from "@/lib/auth";
 
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
 export async function deleteNote(noteId: string) {
   try {
     await verifyAdmin();
@@ -42,6 +44,14 @@ export async function createNote(formData: FormData) {
     let file_size = null;
 
     if (file && file.size > 0) {
+      if (file.size > MAX_UPLOAD_BYTES) {
+        return { error: "Only PDF files up to 10MB are allowed." };
+      }
+
+      if (file.type !== "application/pdf") {
+        return { error: "Only PDF files up to 10MB are allowed." };
+      }
+
       const ext = file.name.split('.').pop() || 'pdf';
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
       
