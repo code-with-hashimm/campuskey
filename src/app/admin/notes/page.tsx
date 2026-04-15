@@ -26,12 +26,24 @@ export default async function AdminNotesPage() {
     `)
     .order("created_at", { ascending: false });
 
+  const formattedNotes = ((notes || []).map((note: any) => {
+    const userObj = Array.isArray(note.users) ? note.users[0] : note.users;
+
+    return {
+      ...note,
+      author_id: note.uploaded_by,
+      users: {
+        name: userObj?.name || "Unknown",
+      },
+    };
+  })) as Parameters<typeof NotesClient>[0]["initialNotes"];
+
   // Get unique subjects for filter
-  const subjects = Array.from(new Set((notes || []).map(n => n.subject))).sort();
+  const subjects = Array.from(new Set(formattedNotes.map((n) => n.subject))).sort();
 
   return (
     <div className="w-full">
-      <NotesClient initialNotes={notes || []} subjects={subjects} />
+      <NotesClient initialNotes={formattedNotes} subjects={subjects} />
     </div>
   );
 }

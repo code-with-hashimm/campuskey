@@ -19,7 +19,7 @@ type Note = {
   semester: string;
   attachment_url?: string;
   created_at: string;
-  author_id: string;
+  author_id?: string;
   users?: {
     name: string;
   };
